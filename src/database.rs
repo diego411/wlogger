@@ -2,7 +2,6 @@ use diesel;
 use diesel::prelude::*;
 use diesel::PgConnection;
 
-use dotenv::dotenv;
 use std::env;
 use std::ops::Deref;
 
@@ -18,7 +17,8 @@ use crate::schema::messages::dsl::messages as all_messages;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-pub fn init_pool(db_url: String) -> Pool {
+pub fn init_pool() -> Pool {
+    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(db_url);
     r2d2::Pool::new(manager).expect("db pool failure")
 }
