@@ -21,12 +21,14 @@ use std::env;
 
 use routes::*;
 
+use twitch_irc::login::StaticLoginCredentials;
+use twitch_irc::TwitchIRCClient;
+use twitch_irc::{ClientConfig, SecureTCPTransport};
+
 pub mod database;
 pub mod models;
 pub mod routes;
 pub mod schema;
-
-// use database::Database;
 
 fn rocket() -> rocket::Rocket {
     dotenv().ok();
@@ -39,6 +41,23 @@ fn rocket() -> rocket::Rocket {
         .mount("/api/v1/", routes![index, new])
 }
 
-fn main() {
-    rocket().launch();
+#[tokio::main]
+pub async fn main() {
+    tokio::spawn(async move {
+        rocket().launch();
+    });
+
+    let config = ClientConfig::default();
+    let (mut incoming_messages, client) =
+        TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
+
+    let join_handle = tokio::spawn(async move {
+        while let Some(message) = incoming_messages.recv().await {
+            println!("Received message: {:?}", message);
+        }
+    });
+
+    client.join("daumenloser".to_owned()).unwrap();
+
+    join_handle.await.unwrap();
 }
