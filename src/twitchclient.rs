@@ -9,6 +9,7 @@ use twitch_irc::{ClientConfig, SecureTCPTransport};
 pub async fn setup() {
     println!("starting setup");
     let pool = database::init_pool();
+    let conn = &pool.get().unwrap();
 
     let config = ClientConfig::default();
     let (mut incoming_messages, client) =
@@ -31,15 +32,17 @@ pub async fn setup() {
                         sender_login: msg.sender.name,
                         post_timestamp: timestamp.as_secs_f64() as i32,
                     };
-                    database::insert(new_message, &pool.get().unwrap());
+                    database::insert_message(new_message, &pool.get().unwrap());
                 }
                 _ => {}
             }
         }
     });
 
-    client.join("forsen".to_owned()).unwrap();
-    println!("joined #daumenloser");
+    let all_channels = database::every_channel(conn);
+    for channel in all_channels {
+        client.join(channel.channel_name.to_owned()).unwrap();
+    }
 
     join_handle.await.unwrap();
 }

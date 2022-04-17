@@ -31,7 +31,7 @@ fn rocket() -> rocket::Rocket {
     let pool = database::init_pool();
     rocket::ignite()
         .manage(pool)
-        .mount("/api/v1/", routes![index, new])
+        .mount("/api/v1/", routes![index, new, new_channel, channel_index])
 }
 
 #[tokio::main]

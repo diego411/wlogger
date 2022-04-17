@@ -11,7 +11,9 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 
-use crate::db::models::{Message, NewMessage};
+use crate::db::models::{Channel, Message, NewChannel, NewMessage};
+use crate::db::schema::channels;
+use crate::db::schema::channels::dsl::channels as all_channels;
 use crate::db::schema::messages;
 use crate::db::schema::messages::dsl::messages as all_messages;
 
@@ -53,9 +55,23 @@ pub fn all(conn: &PgConnection) -> Vec<Message> {
         .expect("Error loading messages from database")
 }
 
-pub fn insert(message: NewMessage, conn: &PgConnection) -> bool {
+pub fn insert_message(message: NewMessage, conn: &PgConnection) -> bool {
     diesel::insert_into(messages::table)
         .values(&message)
+        .execute(conn)
+        .is_ok()
+}
+
+pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {
+    all_channels
+        .order(channels::id.desc())
+        .load::<Channel>(conn)
+        .expect("Error loading channels from database")
+}
+
+pub fn add_channel(channel: NewChannel, conn: &PgConnection) -> bool {
+    diesel::insert_into(channels::table)
+        .values(&channel)
         .execute(conn)
         .is_ok()
 }

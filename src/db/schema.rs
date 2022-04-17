@@ -1,4 +1,11 @@
 table! {
+    channels (id) {
+        id -> Int4,
+        channel_name -> Varchar,
+    }
+}
+
+table! {
     messages (id) {
         id -> Int4,
         content -> Text,
@@ -7,3 +14,8 @@ table! {
         post_timestamp -> Int4,
     }
 }
+
+allow_tables_to_appear_in_same_query!(
+    channels,
+    messages,
+);
