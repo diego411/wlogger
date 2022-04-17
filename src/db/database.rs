@@ -11,9 +11,9 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 
-use crate::models::{Message, NewMessage};
-use crate::schema::messages;
-use crate::schema::messages::dsl::messages as all_messages;
+use crate::db::models::{Message, NewMessage};
+use crate::db::schema::messages;
+use crate::db::schema::messages::dsl::messages as all_messages;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 

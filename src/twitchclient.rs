@@ -1,5 +1,5 @@
-use crate::database;
-use crate::models;
+use crate::db::database;
+use crate::db::models;
 use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;

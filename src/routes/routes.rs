@@ -1,6 +1,6 @@
-use crate::database;
-use crate::database::Conn as db_conn;
-use crate::models::NewMessage;
+use crate::db::database;
+use crate::db::database::Conn as db_conn;
+use crate::db::models::NewMessage;
 use rocket_contrib::json::Json;
 use serde_json::Value;
 

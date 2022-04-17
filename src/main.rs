@@ -18,12 +18,13 @@ extern crate r2d2_diesel;
 
 use dotenv::dotenv;
 
-use routes::*;
+use db::database;
+use routes::routes::*;
 
-pub mod database;
-pub mod models;
+pub mod db;
+// pub mod models;
 pub mod routes;
-pub mod schema;
+// pub mod schema;
 pub mod twitchclient;
 
 fn rocket() -> rocket::Rocket {
