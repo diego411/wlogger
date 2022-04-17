@@ -1,39 +1,44 @@
+#![feature(plugin, decl_macro, proc_macro_hygiene)]
+#![allow(proc_macro_derive_resolution_fallback, unused_attributes)]
+
+#[macro_use]
+extern crate rocket;
+extern crate rocket_contrib;
+
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
+
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
-pub mod database;
-
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+extern crate r2d2;
+extern crate r2d2_diesel;
 
 use dotenv::dotenv;
 use std::env;
 
+use routes::*;
+
+pub mod database;
 pub mod models;
+pub mod routes;
 pub mod schema;
 
-use database::Database;
+// use database::Database;
 
-pub fn establish_connection() -> PgConnection {
+fn rocket() -> rocket::Rocket {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
+
+    let pool = database::init_pool(database_url);
+    rocket::ignite()
+        .manage(pool)
+        .mount("/api/v1/", routes![index, new])
 }
+
 fn main() {
-    let conn: PgConnection = establish_connection();
-    let db: Database = Database::new(conn);
-
-    let message = models::NewMessage {
-        content: String::from("FeelsDankMan FeelsDankMan"),
-        sender_login: String::from("daumenloser"),
-        channel: String::from("xqcow"),
-        post_timestamp: 1650214965,
-    };
-
-    if db.insert(message) {
-        println!("success");
-    } else {
-        println!("failed")
-    }
+    rocket().launch();
 }

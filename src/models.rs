@@ -1,6 +1,6 @@
 use crate::schema::messages;
 
-#[derive(Queryable)]
+#[derive(Serialize, Queryable, Debug, Clone)]
 pub struct Message {
     pub id: i32,
     pub content: String,
@@ -9,7 +9,7 @@ pub struct Message {
     pub post_timestamp: i32,
 }
 
-#[derive(Insertable)]
+#[derive(Serialize, Deserialize, Insertable)]
 #[table_name = "messages"]
 pub struct NewMessage {
     pub content: String,
