@@ -6,8 +6,9 @@ use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;
 use twitch_irc::{ClientConfig, SecureTCPTransport};
 
+use std::collections::HashMap;
+
 pub async fn setup() {
-    println!("starting setup");
     let pool = database::init_pool();
     let conn = &pool.get().unwrap();
 
@@ -19,20 +20,23 @@ pub async fn setup() {
         while let Some(message) = incoming_messages.recv().await {
             match message {
                 ServerMessage::Privmsg(msg) => {
-                    println!(
-                        "[#{:?}] {:?}: {:?}",
-                        msg.channel_login, msg.sender.name, msg.message_text
-                    );
-                    let timestamp = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .expect("could not get current time");
-                    let new_message = models::NewMessage {
-                        channel: msg.channel_login,
-                        content: msg.message_text,
-                        sender_login: msg.sender.name,
-                        post_timestamp: timestamp.as_secs_f64() as i32,
-                    };
-                    database::insert_message(new_message, &pool.get().unwrap());
+                    if filter(msg.channel_login.clone(), msg.message_text.clone()).await {
+                        println!(
+                            "[#{:?}] {:?}: {:?}",
+                            msg.channel_login, msg.sender.name, msg.message_text
+                        );
+                        let timestamp = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .expect("could not get current time");
+
+                        let new_message = models::NewMessage {
+                            channel: msg.channel_login,
+                            content: msg.message_text,
+                            sender_login: msg.sender.name,
+                            post_timestamp: timestamp.as_secs_f64() as i32,
+                        };
+                        database::insert_message(new_message, &pool.get().unwrap());
+                    }
                 }
                 _ => {}
             }
@@ -45,4 +49,35 @@ pub async fn setup() {
     }
 
     join_handle.await.unwrap();
+}
+
+#[derive(Deserialize, Debug)]
+struct WEDResponse {
+    response_code: i32,
+    isWeeb: bool,
+    confidence: f32,
+    number_of_weeb_terms: i32,
+}
+
+async fn filter(channel: String, message: String) -> bool {
+    let mut req_body = HashMap::new();
+    req_body.insert("channel", channel);
+    req_body.insert("message", message);
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("http://localhost:5000/api/v1/hwis")
+        .json(&req_body)
+        .send()
+        .await
+        .expect("Encountered issue with WED API");
+
+    let resp_body = resp
+        .text()
+        .await
+        .expect("Encountered issue reading body of WED response");
+    let data = serde_json::from_str::<WEDResponse>(&resp_body[..])
+        .expect("Encountered issue parsing WED response");
+
+    return data.isWeeb;
 }
