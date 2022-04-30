@@ -7,6 +7,7 @@ use twitch_irc::TwitchIRCClient;
 use twitch_irc::{ClientConfig, SecureTCPTransport};
 
 use std::collections::HashMap;
+use std::env;
 
 pub async fn setup() {
     let pool = database::init_pool();
@@ -54,7 +55,7 @@ pub async fn setup() {
 #[derive(Deserialize, Debug)]
 struct WEDResponse {
     response_code: i32,
-    isWeeb: bool,
+    is_weeb: bool,
     confidence: f32,
     number_of_weeb_terms: i32,
 }
@@ -65,8 +66,9 @@ async fn filter(channel: String, message: String) -> bool {
     req_body.insert("message", message);
 
     let client = reqwest::Client::new();
+    let wed_base_url = env::var("WED_URL").expect("WED URL must be set");
     let resp = client
-        .get("http://localhost:5000/api/v1/hwis")
+        .get(wed_base_url + "api/v1/hwis")
         .json(&req_body)
         .send()
         .await
@@ -76,8 +78,9 @@ async fn filter(channel: String, message: String) -> bool {
         .text()
         .await
         .expect("Encountered issue reading body of WED response");
+
     let data = serde_json::from_str::<WEDResponse>(&resp_body[..])
         .expect("Encountered issue parsing WED response");
 
-    return data.isWeeb;
+    return data.is_weeb;
 }
