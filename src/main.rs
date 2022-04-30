@@ -12,6 +12,10 @@ extern crate serde_json;
 
 #[macro_use]
 extern crate diesel;
+
+#[macro_use]
+extern crate diesel_migrations;
+
 extern crate dotenv;
 extern crate r2d2;
 extern crate r2d2_diesel;
@@ -37,6 +41,8 @@ fn rocket() -> rocket::Rocket {
 #[tokio::main]
 pub async fn main() {
     dotenv().ok();
+
+    database::run_migrations();
 
     tokio::spawn(async move {
         rocket().launch();

@@ -19,9 +19,17 @@ use crate::db::schema::messages::dsl::messages as all_messages;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
+pub fn run_migrations() {
+    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    embed_migrations!();
+    let db_conn =
+        PgConnection::establish(&db_url).expect(&format!("Error connecting to {}", db_url));
+    embedded_migrations::run(&db_conn);
+}
+
 pub fn init_pool() -> Pool {
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    let manager = ConnectionManager::<PgConnection>::new(&db_url);
     r2d2::Pool::new(manager).expect("db pool failure")
 }
 
