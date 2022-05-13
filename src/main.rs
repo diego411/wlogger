@@ -37,10 +37,12 @@ fn rocket() -> rocket::Rocket {
         "/api/v1/",
         routes![
             message_index,
+            channel,
             new_message,
             new_channel,
             channel_index,
             user_index,
+            user,
             new_user
         ],
     )

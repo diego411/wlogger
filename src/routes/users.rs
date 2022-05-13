@@ -14,6 +14,19 @@ pub fn user_index(conn: db_conn) -> Json<Value> {
     }))
 }
 
+#[get("/users/<user_name>", format = "application/json")]
+pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
+    let messages_for_user = database::messages_by_user(user_name.clone(), &conn);
+    let message_count = messages_for_user.len();
+
+    Json(json!({
+        "status": 200,
+        "user_name": user_name,
+        "message_count": message_count,
+        "messages": messages_for_user
+    }))
+}
+
 #[post("/users", format = "application/json", data = "<new_user>")]
 pub fn new_user(conn: db_conn, new_user: Json<NewUser>) -> Json<Value> {
     Json(json!({

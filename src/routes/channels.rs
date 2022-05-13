@@ -14,6 +14,19 @@ pub fn channel_index(conn: db_conn) -> Json<Value> {
     }))
 }
 
+#[get("/channels/<channel_name>", format = "application/json")]
+pub fn channel(conn: db_conn, channel_name: String) -> Json<Value> {
+    let all_messages_in_channel = database::messages_in_channel(channel_name.clone(), &conn);
+    let message_count = all_messages_in_channel.len();
+
+    Json(json!({
+        "status": 200,
+        "channel_name": channel_name,
+        "message_count": message_count,
+        "messages": all_messages_in_channel,
+    }))
+}
+
 #[post("/channels", format = "application/json", data = "<new_channel>")]
 pub fn new_channel(conn: db_conn, new_channel: Json<NewChannel>) -> Json<Value> {
     Json(json!({
