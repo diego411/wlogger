@@ -23,19 +23,27 @@ extern crate r2d2_diesel;
 use dotenv::dotenv;
 
 use db::database;
-use routes::routes::*;
+use routes::channels::*;
+use routes::messages::*;
+use routes::users::*;
 
 pub mod db;
-// pub mod models;
 pub mod routes;
-// pub mod schema;
 pub mod twitchclient;
 
 fn rocket() -> rocket::Rocket {
     let pool = database::init_pool();
-    rocket::ignite()
-        .manage(pool)
-        .mount("/api/v1/", routes![index, new, new_channel, channel_index])
+    rocket::ignite().manage(pool).mount(
+        "/api/v1/",
+        routes![
+            message_index,
+            new_message,
+            new_channel,
+            channel_index,
+            user_index,
+            new_user
+        ],
+    )
 }
 
 #[tokio::main]

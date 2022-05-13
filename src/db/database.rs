@@ -11,11 +11,13 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 
-use crate::db::models::{Channel, Message, NewChannel, NewMessage};
+use crate::db::models::{Channel, Message, NewChannel, NewMessage, NewUser, User};
 use crate::db::schema::channels;
 use crate::db::schema::channels::dsl::channels as all_channels;
 use crate::db::schema::messages;
 use crate::db::schema::messages::dsl::messages as all_messages;
+use crate::db::schema::users;
+use crate::db::schema::users::dsl::users as all_users;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -56,7 +58,7 @@ impl Deref for Conn {
     }
 }
 
-pub fn all(conn: &PgConnection) -> Vec<Message> {
+pub fn every_message(conn: &PgConnection) -> Vec<Message> {
     all_messages
         .order(messages::id.desc())
         .load::<Message>(conn)
@@ -72,14 +74,28 @@ pub fn insert_message(message: NewMessage, conn: &PgConnection) -> bool {
 
 pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {
     all_channels
-        .order(channels::id.desc())
+        .order(channels::channel_name.desc())
         .load::<Channel>(conn)
         .expect("Error loading channels from database")
 }
 
-pub fn add_channel(channel: NewChannel, conn: &PgConnection) -> bool {
+pub fn insert_channel(channel: NewChannel, conn: &PgConnection) -> bool {
     diesel::insert_into(channels::table)
         .values(&channel)
+        .execute(conn)
+        .is_ok()
+}
+
+pub fn every_user(conn: &PgConnection) -> Vec<User> {
+    all_users
+        .order(users::user_login.desc())
+        .load::<User>(conn)
+        .expect("Error loading users from database")
+}
+
+pub fn insert_user(user: NewUser, conn: &PgConnection) -> bool {
+    diesel::insert_into(users::table)
+        .values(&user)
         .execute(conn)
         .is_ok()
 }
