@@ -33,9 +33,15 @@ pub async fn setup() {
                         let new_message = models::NewMessage {
                             channel: msg.channel_login,
                             content: msg.message_text,
-                            sender_login: msg.sender.name,
+                            sender_login: msg.sender.name.clone(),
                             post_timestamp: timestamp.as_secs_f64() as i32,
                         };
+
+                        let user = models::NewUser {
+                            user_login: msg.sender.name,
+                        };
+
+                        database::insert_user(user, &pool.get().unwrap());
                         database::insert_message(new_message, &pool.get().unwrap());
                     }
                 }
