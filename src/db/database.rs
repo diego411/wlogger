@@ -80,6 +80,17 @@ pub fn messages_by_user(user_name: String, conn: &PgConnection) -> Vec<Message> 
         .expect(&format!("Error loading messages for user: {}", &user_name))
 }
 
+pub fn messages_in_channel(channel_name: String, conn: &PgConnection) -> Vec<Message> {
+    all_messages
+        .order(messages::id.desc())
+        .filter(messages::channel.eq(&channel_name))
+        .load::<Message>(conn)
+        .expect(&format!(
+            "Error loading messages for channel: {}",
+            &channel_name
+        ))
+}
+
 pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {
     all_channels
         .order(channels::channel_name.desc())
