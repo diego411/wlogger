@@ -72,6 +72,14 @@ pub fn insert_message(message: NewMessage, conn: &PgConnection) -> bool {
         .is_ok()
 }
 
+pub fn messages_by_user(user_name: String, conn: &PgConnection) -> Vec<Message> {
+    all_messages
+        .order(messages::id.desc())
+        .filter(messages::sender_login.eq(&user_name))
+        .load::<Message>(conn)
+        .expect(&format!("Error loading messages for user: {}", &user_name))
+}
+
 pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {
     all_channels
         .order(channels::channel_name.desc())
