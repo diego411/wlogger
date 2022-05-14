@@ -21,7 +21,11 @@ pub async fn setup() {
         while let Some(message) = incoming_messages.recv().await {
             match message {
                 ServerMessage::Privmsg(msg) => {
-                    if filter(msg.channel_login.clone(), msg.message_text.clone()).await {
+                    let wed_response =
+                        fetch_wed_response(msg.channel_login.clone(), msg.message_text.clone())
+                            .await;
+
+                    if wed_response.is_weeb {
                         println!(
                             "[#{:?}] {:?}: {:?}",
                             msg.channel_login, msg.sender.name, msg.message_text
@@ -35,6 +39,7 @@ pub async fn setup() {
                             content: msg.message_text,
                             sender_login: msg.sender.name.clone(),
                             post_timestamp: timestamp.as_secs_f64() as i32,
+                            score: wed_response.number_of_weeb_terms,
                         };
 
                         let user = models::NewUser {
@@ -66,7 +71,7 @@ struct WEDResponse {
     number_of_weeb_terms: i32,
 }
 
-async fn filter(channel: String, message: String) -> bool {
+async fn fetch_wed_response(channel: String, message: String) -> WEDResponse {
     let mut req_body = HashMap::new();
     req_body.insert("channel", channel);
     req_body.insert("message", message);
@@ -85,8 +90,6 @@ async fn filter(channel: String, message: String) -> bool {
         .await
         .expect("Encountered issue reading body of WED response");
 
-    let data = serde_json::from_str::<WEDResponse>(&resp_body[..])
-        .expect("Encountered issue parsing WED response");
-
-    return data.is_weeb;
+    serde_json::from_str::<WEDResponse>(&resp_body[..])
+        .expect("Encountered issue parsing WED response")
 }

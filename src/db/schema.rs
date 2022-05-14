@@ -11,6 +11,7 @@ table! {
         channel -> Varchar,
         sender_login -> Varchar,
         post_timestamp -> Int4,
+        score -> Int4,
     }
 }
 

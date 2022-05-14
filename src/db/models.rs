@@ -9,6 +9,7 @@ pub struct Message {
     pub channel: String,
     pub sender_login: String,
     pub post_timestamp: i32,
+    pub score: i32,
 }
 
 #[derive(Serialize, Deserialize, Insertable)]
@@ -18,6 +19,7 @@ pub struct NewMessage {
     pub channel: String,
     pub sender_login: String,
     pub post_timestamp: i32,
+    pub score: i32,
 }
 
 #[derive(Serialize, Queryable, Debug, Clone)]

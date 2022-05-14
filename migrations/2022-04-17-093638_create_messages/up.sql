@@ -11,5 +11,6 @@ CREATE TABLE messages (
     content TEXT NOT NULL,
     channel VARCHAR(100) NOT NULL REFERENCES channels(channel_name),
     sender_login VARCHAR(100) NOT NULL REFERENCES users(user_login),
-    post_timestamp INT NOT NULL
+    post_timestamp INT NOT NULL,
+    score INT NOT NULL
 );
