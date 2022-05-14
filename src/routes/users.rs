@@ -19,11 +19,17 @@ pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
     let messages_for_user = database::messages_by_user(user_name.clone(), &conn);
     let message_count = messages_for_user.len();
 
+    let mut score = 0;
+    for message in &messages_for_user {
+        score = score + message.score;
+    }
+
     Json(json!({
         "status": 200,
         "user_name": user_name,
         "message_count": message_count,
-        "messages": messages_for_user
+        "score": score,
+        "messages": messages_for_user,
     }))
 }
 

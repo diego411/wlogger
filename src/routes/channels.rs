@@ -19,10 +19,16 @@ pub fn channel(conn: db_conn, channel_name: String) -> Json<Value> {
     let all_messages_in_channel = database::messages_in_channel(channel_name.clone(), &conn);
     let message_count = all_messages_in_channel.len();
 
+    let mut score = 0;
+    for message in &all_messages_in_channel {
+        score = score + message.score;
+    }
+
     Json(json!({
         "status": 200,
         "channel_name": channel_name,
         "message_count": message_count,
+        "score": score,
         "messages": all_messages_in_channel,
     }))
 }
