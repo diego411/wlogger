@@ -1,5 +1,6 @@
 use crate::db::database;
 use crate::db::models;
+use std::io::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::ServerMessage;
@@ -24,6 +25,14 @@ pub async fn setup() {
                     let wed_response =
                         fetch_wed_response(msg.channel_login.clone(), msg.message_text.clone())
                             .await;
+
+                    let wed_response = match wed_response {
+                        Ok(response) => response,
+                        Err(_) => {
+                            println!("WED fetch failed");
+                            continue;
+                        }
+                    };
 
                     if wed_response.is_weeb {
                         println!(
@@ -71,7 +80,10 @@ struct WEDResponse {
     number_of_weeb_terms: i32,
 }
 
-async fn fetch_wed_response(channel: String, message: String) -> WEDResponse {
+async fn fetch_wed_response(
+    channel: String,
+    message: String,
+) -> Result<WEDResponse, Box<dyn std::error::Error>> {
     let mut req_body = HashMap::new();
     req_body.insert("channel", channel);
     req_body.insert("message", message);
@@ -82,14 +94,8 @@ async fn fetch_wed_response(channel: String, message: String) -> WEDResponse {
         .get(wed_base_url + "api/v1/hwis")
         .json(&req_body)
         .send()
-        .await
-        .expect("Encountered issue with WED API");
-
-    let resp_body = resp
-        .text()
-        .await
-        .expect("Encountered issue reading body of WED response");
-
-    serde_json::from_str::<WEDResponse>(&resp_body[..])
-        .expect("Encountered issue parsing WED response")
+        .await?;
+    let resp_body = resp.text().await?;
+    let response = serde_json::from_str::<WEDResponse>(&resp_body[..])?;
+    Ok(response)
 }
