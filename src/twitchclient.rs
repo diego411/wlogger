@@ -1,6 +1,5 @@
 use crate::db::database;
 use crate::db::models;
-use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::login::StaticLoginCredentials;
@@ -8,10 +7,10 @@ use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;
 use twitch_irc::{ClientConfig, SecureTCPTransport};
 
-use std::collections::HashMap;
-use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+
+use crate::controllers::wed as WEDController;
 
 #[derive(Debug)]
 pub struct TwitchClient {
@@ -22,7 +21,7 @@ pub struct TwitchClient {
 impl TwitchClient {
     pub fn new() -> TwitchClient {
         let config = ClientConfig::default();
-        let (mut incoming_messages, client) =
+        let (incoming_messages, client) =
             TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
         TwitchClient {
             client: client,
@@ -43,9 +42,11 @@ impl TwitchClient {
             while let Some(message) = client.stream().lock().await.recv().await {
                 match message {
                     ServerMessage::Privmsg(msg) => {
-                        let wed_response =
-                            fetch_wed_response(msg.channel_login.clone(), msg.message_text.clone())
-                                .await;
+                        let wed_response = WEDController::fetch_wed_response(
+                            msg.channel_login.clone(),
+                            msg.message_text.clone(),
+                        )
+                        .await;
 
                         let wed_response = match wed_response {
                             Ok(response) => response,
@@ -96,32 +97,4 @@ impl TwitchClient {
     pub fn join(&self, channel_login: String) {
         self.client.join(channel_login);
     }
-}
-
-#[derive(Deserialize, Debug)]
-struct WEDResponse {
-    response_code: i32,
-    is_weeb: bool,
-    confidence: f32,
-    number_of_weeb_terms: i32,
-}
-
-async fn fetch_wed_response(
-    channel: String,
-    message: String,
-) -> Result<WEDResponse, Box<dyn std::error::Error>> {
-    let mut req_body = HashMap::new();
-    req_body.insert("channel", channel);
-    req_body.insert("message", message);
-
-    let client = reqwest::Client::new();
-    let wed_base_url = env::var("WED_URL").expect("WED URL must be set");
-    let resp = client
-        .get(wed_base_url + "api/v1/hwis")
-        .json(&req_body)
-        .send()
-        .await?;
-    let resp_body = resp.text().await?;
-    let response = serde_json::from_str::<WEDResponse>(&resp_body[..])?;
-    Ok(response)
 }
