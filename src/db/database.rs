@@ -52,7 +52,7 @@ async fn pull_channels(db_conn: &PgConnection) {
 
 fn run_migrations(db_conn: &PgConnection) {
     embed_migrations!();
-    embedded_migrations::run(db_conn);
+    embedded_migrations::run(db_conn).unwrap();
 }
 
 pub fn init_pool() -> Pool {
