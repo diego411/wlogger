@@ -25,12 +25,14 @@ pub struct NewMessage {
 #[derive(Serialize, Queryable, Debug, Clone)]
 pub struct Channel {
     pub channel_name: String,
+    pub actively_logged: bool,
 }
 
 #[derive(Serialize, Deserialize, Insertable)]
 #[table_name = "channels"]
 pub struct NewChannel {
     pub channel_name: String,
+    pub actively_logged: bool,
 }
 
 #[derive(Serialize, Queryable, Debug, Clone)]

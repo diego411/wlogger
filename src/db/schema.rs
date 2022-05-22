@@ -1,6 +1,7 @@
 table! {
     channels (channel_name) {
         channel_name -> Varchar,
+        actively_logged -> Bool,
     }
 }
 

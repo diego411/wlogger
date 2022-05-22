@@ -57,6 +57,12 @@ impl TwitchClient {
                         };
 
                         if wed_response.is_weeb {
+                            if !database::is_channel_actively_logged(
+                                msg.channel_login.clone(),
+                                &pool.get().unwrap(),
+                            ) {
+                                continue;
+                            };
                             println!(
                                 "[#{:?}] {:?}: {:?}",
                                 msg.channel_login, msg.sender.name, msg.message_text

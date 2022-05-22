@@ -38,6 +38,7 @@ async fn pull_channels(db_conn: &PgConnection) {
                 insert_channel(
                     NewChannel {
                         channel_name: channel_name,
+                        actively_logged: true,
                     },
                     db_conn,
                 );
@@ -129,6 +130,23 @@ pub fn insert_channel(channel: NewChannel, conn: &PgConnection) -> bool {
         .values(&channel)
         .execute(conn)
         .is_ok()
+}
+
+pub fn is_channel_actively_logged(channel_name: String, conn: &PgConnection) -> bool {
+    all_channels
+        .order(channels::channel_name.desc())
+        .filter(channels::channel_name.eq(&channel_name))
+        .load::<Channel>(conn)
+        .expect(&format!(
+            "Error loading property for channel {}",
+            channel_name
+        ))
+        .first()
+        .expect(&format!(
+            "Error loading property for channel {}",
+            channel_name
+        ))
+        .actively_logged
 }
 
 pub fn every_user(conn: &PgConnection) -> Vec<User> {

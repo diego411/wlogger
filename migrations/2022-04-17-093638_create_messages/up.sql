@@ -1,5 +1,6 @@
 CREATE TABLE channels (
-    channel_name VARCHAR(100) PRIMARY KEY
+    channel_name VARCHAR(100) PRIMARY KEY,
+    actively_logged boolean NOT NULL
 );
 
 CREATE TABLE users (
