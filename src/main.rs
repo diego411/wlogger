@@ -21,6 +21,7 @@ extern crate r2d2;
 extern crate r2d2_diesel;
 
 use dotenv::dotenv;
+use std::sync::Arc;
 
 use db::database;
 use routes::channels::*;
@@ -31,9 +32,11 @@ pub mod db;
 pub mod routes;
 pub mod twitchclient;
 
-fn rocket() -> rocket::Rocket {
+use twitchclient::TwitchClient;
+
+fn rocket(twitch_client: Arc<TwitchClient>) -> rocket::Rocket {
     let pool = database::init_pool();
-    rocket::ignite().manage(pool).mount(
+    rocket::ignite().manage(pool).manage(twitch_client).mount(
         "/api/v1/",
         routes![
             message_index,
@@ -54,9 +57,11 @@ pub async fn main() {
 
     database::run_migrations();
 
+    let twitch_client = Arc::new(TwitchClient::new());
+    let twitch_client_arc_clone = Arc::clone(&twitch_client);
     tokio::spawn(async move {
-        rocket().launch();
+        rocket(twitch_client_arc_clone).launch();
     });
 
-    twitchclient::setup().await;
+    TwitchClient::run(twitch_client).await;
 }

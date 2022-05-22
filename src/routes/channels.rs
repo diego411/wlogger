@@ -1,8 +1,12 @@
 use crate::db::database;
 use crate::db::database::Conn as db_conn;
 use crate::db::models::NewChannel;
+use crate::twitchclient::TwitchClient;
+use rocket::State;
 use rocket_contrib::json::Json;
 use serde_json::Value;
+
+use std::sync::Arc;
 
 #[get("/channels", format = "application/json")]
 pub fn channel_index(conn: db_conn) -> Json<Value> {
@@ -34,9 +38,15 @@ pub fn channel(conn: db_conn, channel_name: String) -> Json<Value> {
 }
 
 #[post("/channels", format = "application/json", data = "<new_channel>")]
-pub fn new_channel(conn: db_conn, new_channel: Json<NewChannel>) -> Json<Value> {
+pub fn new_channel(
+    conn: db_conn,
+    twitch_client: State<Arc<TwitchClient>>,
+    new_channel: Json<NewChannel>,
+) -> Json<Value> {
+    let channel = new_channel.into_inner();
+    twitch_client.join(channel.channel_name.to_owned());
     Json(json!({
-        "status": database::insert_channel(new_channel.into_inner(), &conn),
+        "status": database::insert_channel(channel, &conn),
         "result": database::every_channel(&conn).first(),
     }))
 }
