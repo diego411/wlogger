@@ -28,6 +28,7 @@ use routes::channels::*;
 use routes::messages::*;
 use routes::users::*;
 
+pub mod controllers;
 pub mod db;
 pub mod routes;
 pub mod twitchclient;
@@ -55,7 +56,7 @@ fn rocket(twitch_client: Arc<TwitchClient>) -> rocket::Rocket {
 pub async fn main() {
     dotenv().ok();
 
-    database::run_migrations();
+    database::init().await;
 
     let twitch_client = Arc::new(TwitchClient::new());
     let twitch_client_arc_clone = Arc::clone(&twitch_client);

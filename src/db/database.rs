@@ -19,14 +19,40 @@ use crate::db::schema::messages::dsl::messages as all_messages;
 use crate::db::schema::users;
 use crate::db::schema::users::dsl::users as all_users;
 
+use crate::controllers::config as ConfigController;
+
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-pub fn run_migrations() {
+pub async fn init() {
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    embed_migrations!();
     let db_conn =
         PgConnection::establish(&db_url).expect(&format!("Error connecting to {}", db_url));
-    embedded_migrations::run(&db_conn);
+    run_migrations(&db_conn);
+    pull_channels(&db_conn).await;
+}
+
+async fn pull_channels(db_conn: &PgConnection) {
+    match ConfigController::fetch_config().await {
+        Ok(resp) => {
+            for channel_name in resp.channels {
+                insert_channel(
+                    NewChannel {
+                        channel_name: channel_name,
+                    },
+                    db_conn,
+                );
+            }
+        }
+        Err(err) => println!(
+            "Failed to fetch channel config from config service with error: {}",
+            err
+        ),
+    };
+}
+
+fn run_migrations(db_conn: &PgConnection) {
+    embed_migrations!();
+    embedded_migrations::run(db_conn);
 }
 
 pub fn init_pool() -> Pool {
