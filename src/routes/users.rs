@@ -33,6 +33,33 @@ pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
     }))
 }
 
+#[patch("/users/<user_name>", format = "application/json", data = "<props>")]
+pub fn patch_user(conn: db_conn, user_name: String, props: Json<Value>) -> Json<Value> {
+    println!("{:?}", props.get("opt_out"));
+    match props.get("opt_out") {
+        Some(opt_out) => match opt_out.as_bool() {
+            Some(b) => {
+                if b {
+                    database::opt_out_user(user_name.clone(), &conn);
+                } else {
+                    database::opt_in_user(user_name.clone(), &conn);
+                }
+            }
+            None => {
+                return Json(json!({
+                    "status": 400,
+                    "error": "Value for property opt_out should be of boolean"
+                }))
+            }
+        },
+        None => (),
+    }
+    Json(json!({
+        "status": 200,
+        "user": database::user_with_name(user_name, &conn)
+    }))
+}
+
 #[post("/users", format = "application/json", data = "<new_user>")]
 pub fn new_user(conn: db_conn, new_user: Json<NewUser>) -> Json<Value> {
     Json(json!({
