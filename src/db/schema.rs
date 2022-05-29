@@ -19,6 +19,7 @@ table! {
 table! {
     users (user_login) {
         user_login -> Varchar,
+        opted_out -> Bool,
     }
 }
 

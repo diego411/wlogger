@@ -4,7 +4,8 @@ CREATE TABLE channels (
 );
 
 CREATE TABLE users (
-    user_login VARCHAR(100) PRIMARY KEY
+    user_login VARCHAR(100) PRIMARY KEY,
+    opted_out boolean NOT NULL
 );
 
 CREATE TABLE messages (

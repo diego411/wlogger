@@ -38,10 +38,12 @@ pub struct NewChannel {
 #[derive(Serialize, Queryable, Debug, Clone)]
 pub struct User {
     pub user_login: String,
+    pub opted_out: bool,
 }
 
 #[derive(Serialize, Deserialize, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
     pub user_login: String,
+    pub opted_out: bool,
 }

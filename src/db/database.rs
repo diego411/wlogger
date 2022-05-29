@@ -156,6 +156,35 @@ pub fn every_user(conn: &PgConnection) -> Vec<User> {
         .expect("Error loading users from database")
 }
 
+pub fn user_with_name(user_name: String, conn: &PgConnection) -> Option<User> {
+    match all_users
+        .order(users::user_login.desc())
+        .filter(users::user_login.eq(&user_name))
+        .load::<User>(conn)
+        .expect("Error loading users from database")
+        .first()
+    {
+        Some(user) => Some(user.to_owned()),
+        None => None,
+    }
+}
+
+pub fn opt_out_user(user_name: String, conn: &PgConnection) -> bool {
+    diesel::update(users::table)
+        .filter(users::user_login.eq(&user_name))
+        .set(users::opted_out.eq(true))
+        .execute(conn)
+        .is_ok()
+}
+
+pub fn opt_in_user(user_name: String, conn: &PgConnection) -> bool {
+    diesel::update(users::table)
+        .filter(users::user_login.eq(&user_name))
+        .set(users::opted_out.eq(false))
+        .execute(conn)
+        .is_ok()
+}
+
 pub fn insert_user(user: NewUser, conn: &PgConnection) -> bool {
     diesel::insert_into(users::table)
         .values(&user)

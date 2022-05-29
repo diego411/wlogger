@@ -1,5 +1,6 @@
 use crate::db::database;
 use crate::db::models;
+use crate::db::models::NewUser;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::mpsc::UnboundedReceiver;
 use twitch_irc::login::StaticLoginCredentials;
@@ -42,6 +43,24 @@ impl TwitchClient {
             while let Some(message) = client.stream().lock().await.recv().await {
                 match message {
                     ServerMessage::Privmsg(msg) => {
+                        let mut new_user: Option<NewUser> = None;
+                        match database::user_with_name(
+                            msg.sender.name.clone(),
+                            &pool.get().unwrap(),
+                        ) {
+                            Some(user) => {
+                                if user.opted_out {
+                                    continue;
+                                }
+                            }
+                            None => {
+                                new_user = Some(models::NewUser {
+                                    user_login: msg.sender.name.clone(),
+                                    opted_out: false,
+                                });
+                            }
+                        }
+
                         let wed_response = WEDController::fetch_wed_response(
                             msg.channel_login.clone(),
                             msg.message_text.clone(),
@@ -74,16 +93,18 @@ impl TwitchClient {
                             let new_message = models::NewMessage {
                                 channel: msg.channel_login,
                                 content: msg.message_text,
-                                sender_login: msg.sender.name.clone(),
+                                sender_login: msg.sender.name,
                                 post_timestamp: timestamp.as_secs_f64() as i32,
                                 score: wed_response.number_of_weeb_terms,
                             };
 
-                            let user = models::NewUser {
-                                user_login: msg.sender.name,
+                            match new_user {
+                                None => (),
+                                Some(user) => {
+                                    database::insert_user(user, &pool.get().unwrap());
+                                }
                             };
 
-                            database::insert_user(user, &pool.get().unwrap());
                             database::insert_message(new_message, &pool.get().unwrap());
                         }
                     }
