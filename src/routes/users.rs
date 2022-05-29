@@ -35,7 +35,6 @@ pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
 
 #[patch("/users/<user_name>", format = "application/json", data = "<props>")]
 pub fn patch_user(conn: db_conn, user_name: String, props: Json<Value>) -> Json<Value> {
-    println!("{:?}", props.get("opt_out"));
     match props.get("opt_out") {
         Some(opt_out) => match opt_out.as_bool() {
             Some(b) => {
