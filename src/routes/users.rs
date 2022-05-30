@@ -1,6 +1,6 @@
 use crate::db::database;
 use crate::db::database::Conn as db_conn;
-use crate::db::models::NewUser;
+use crate::db::models::{NewUser, Message};
 use rocket_contrib::json::Json;
 use serde_json::Value;
 
@@ -22,7 +22,11 @@ pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
             return Json(json!({
                 "status": 200,
                 "user_name": user_name,
-                "exists": false
+                "exists": false,
+                "message_count": 0,
+                "score": 0,
+                "opted_out": false,
+                "messages:": Vec::<Message>::new()
             }))
         }
     };
