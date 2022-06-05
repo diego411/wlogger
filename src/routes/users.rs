@@ -26,7 +26,7 @@ pub fn user(conn: db_conn, user_name: String) -> Json<Value> {
                 "message_count": 0,
                 "score": 0,
                 "opted_out": false,
-                "messages:": Vec::<Message>::new()
+                "messages": Vec::<Message>::new()
             }))
         }
     };
