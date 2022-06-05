@@ -122,6 +122,9 @@ impl TwitchClient {
     }
 
     pub fn join(&self, channel_login: String) {
-        self.client.join(channel_login);
+        match self.client.join(channel_login.clone()) {
+            Ok(()) => println!("Joined {}", channel_login),
+            Err(err) => println!("Failed to join {} with err: {}", channel_login, err),
+        }
     }
 }
