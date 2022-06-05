@@ -1,5 +1,6 @@
 use diesel;
 use diesel::prelude::*;
+use diesel::sql_types::Text;
 use diesel::PgConnection;
 
 use std::env;
@@ -85,6 +86,8 @@ impl Deref for Conn {
     }
 }
 
+sql_function!(fn lower(x: Text) -> Text);
+
 pub fn every_message(conn: &PgConnection) -> Vec<Message> {
     all_messages
         .order(messages::id.desc())
@@ -102,7 +105,7 @@ pub fn insert_message(message: NewMessage, conn: &PgConnection) -> bool {
 pub fn messages_by_user(user_name: String, conn: &PgConnection) -> Vec<Message> {
     all_messages
         .order(messages::id.desc())
-        .filter(messages::sender_login.eq(&user_name))
+        .filter(lower(messages::sender_login).eq(&user_name.to_lowercase()))
         .load::<Message>(conn)
         .expect(&format!("Error loading messages for user: {}", &user_name))
 }
@@ -110,7 +113,7 @@ pub fn messages_by_user(user_name: String, conn: &PgConnection) -> Vec<Message> 
 pub fn messages_in_channel(channel_name: String, conn: &PgConnection) -> Vec<Message> {
     all_messages
         .order(messages::id.desc())
-        .filter(messages::channel.eq(&channel_name))
+        .filter(lower(messages::channel).eq(&channel_name.to_lowercase()))
         .load::<Message>(conn)
         .expect(&format!(
             "Error loading messages for channel: {}",
@@ -135,7 +138,7 @@ pub fn insert_channel(channel: NewChannel, conn: &PgConnection) -> bool {
 pub fn is_channel_actively_logged(channel_name: String, conn: &PgConnection) -> bool {
     all_channels
         .order(channels::channel_name.desc())
-        .filter(channels::channel_name.eq(&channel_name))
+        .filter(lower(channels::channel_name).eq(&channel_name.to_lowercase()))
         .load::<Channel>(conn)
         .expect(&format!(
             "Error loading property for channel {}",
@@ -159,7 +162,7 @@ pub fn every_user(conn: &PgConnection) -> Vec<User> {
 pub fn user_with_name(user_name: String, conn: &PgConnection) -> Option<User> {
     match all_users
         .order(users::user_login.desc())
-        .filter(users::user_login.eq(&user_name))
+        .filter(lower(users::user_login).eq(&user_name.to_lowercase()))
         .load::<User>(conn)
         .expect("Error loading users from database")
         .first()
@@ -171,7 +174,7 @@ pub fn user_with_name(user_name: String, conn: &PgConnection) -> Option<User> {
 
 pub fn opt_out_user(user_name: String, conn: &PgConnection) -> bool {
     diesel::update(users::table)
-        .filter(users::user_login.eq(&user_name))
+        .filter(lower(users::user_login).eq(&user_name.to_lowercase()))
         .set(users::opted_out.eq(true))
         .execute(conn)
         .is_ok()
@@ -179,7 +182,7 @@ pub fn opt_out_user(user_name: String, conn: &PgConnection) -> bool {
 
 pub fn opt_in_user(user_name: String, conn: &PgConnection) -> bool {
     diesel::update(users::table)
-        .filter(users::user_login.eq(&user_name))
+        .filter(lower(users::user_login).eq(&user_name.to_lowercase()))
         .set(users::opted_out.eq(false))
         .execute(conn)
         .is_ok()
