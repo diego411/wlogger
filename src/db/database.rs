@@ -128,6 +128,19 @@ pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {
         .expect("Error loading channels from database")
 }
 
+pub fn channel_with_name(channel_name: String, conn: &PgConnection) -> Option<Channel> {
+    match all_channels
+        .order(channels::channel_name.desc())
+        .filter(lower(channels::channel_name).eq(&channel_name.to_lowercase()))
+        .load::<Channel>(conn)
+        .expect("Error loading channels from database")
+        .first()
+    {
+        Some(channel) => Some(channel.to_owned()),
+        None => None,
+    }
+}
+
 pub fn insert_channel(channel: NewChannel, conn: &PgConnection) -> bool {
     diesel::insert_into(channels::table)
         .values(&channel)
