@@ -10,7 +10,7 @@ pub fn user_index(conn: db_conn) -> Json<Value> {
 
     Json(json!({
         "status": 200,
-        "result": all_users,
+        "user_count": all_users.len(),
         "top_users": database::top_users_by_score(10, &conn)
     }))
 }
