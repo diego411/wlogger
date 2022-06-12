@@ -1,6 +1,6 @@
 use crate::db::database;
 use crate::db::database::Conn as db_conn;
-use crate::db::models::{NewUser, Message};
+use crate::db::models::{Message, NewUser};
 use rocket_contrib::json::Json;
 use serde_json::Value;
 
@@ -11,6 +11,7 @@ pub fn user_index(conn: db_conn) -> Json<Value> {
     Json(json!({
         "status": 200,
         "result": all_users,
+        "top_users": database::top_users_by_score(10, &conn)
     }))
 }
 

@@ -47,3 +47,9 @@ pub struct NewUser {
     pub user_login: String,
     pub opted_out: bool,
 }
+
+#[derive(Serialize, Queryable, Debug, Clone)]
+pub struct UserWithScore {
+    pub user_login: String,
+    pub score: i64,
+}

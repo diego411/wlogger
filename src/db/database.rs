@@ -1,4 +1,5 @@
 use diesel;
+use diesel::dsl::sum;
 use diesel::prelude::*;
 use diesel::sql_types::Text;
 use diesel::PgConnection;
@@ -12,7 +13,7 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 
-use crate::db::models::{Channel, Message, NewChannel, NewMessage, NewUser, User};
+use crate::db::models::{Channel, Message, NewChannel, NewMessage, NewUser, User, UserWithScore};
 use crate::db::schema::channels;
 use crate::db::schema::channels::dsl::channels as all_channels;
 use crate::db::schema::messages;
@@ -183,6 +184,25 @@ pub fn user_with_name(user_name: String, conn: &PgConnection) -> Option<User> {
         Some(user) => Some(user.to_owned()),
         None => None,
     }
+}
+
+pub fn top_users_by_score(size: usize, conn: &PgConnection) -> Vec<UserWithScore> {
+    let top_users = all_users
+        .inner_join(all_messages.on(users::user_login.like(messages::sender_login)))
+        .select((
+            users::user_login,
+            diesel::dsl::sql::<diesel::sql_types::BigInt>("sum(score)"),
+        ))
+        .group_by(users::user_login)
+        .order_by(sum(messages::score).desc())
+        .load::<UserWithScore>(conn)
+        .expect("Error loading users from database");
+
+    if top_users.len() <= size {
+        return top_users;
+    }
+
+    top_users[0..size].to_vec()
 }
 
 pub fn opt_out_user(user_name: String, conn: &PgConnection) -> bool {
