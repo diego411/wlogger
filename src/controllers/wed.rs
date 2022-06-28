@@ -1,4 +1,4 @@
-use std::env;
+use std::{collections::HashMap, env};
 
 #[derive(Deserialize, Debug)]
 pub struct WEDResponse {
@@ -8,13 +8,23 @@ pub struct WEDResponse {
     pub number_of_weeb_terms: i32,
 }
 
+#[derive(Serialize)]
+pub struct ReqBody {
+    pub channel: String,
+    pub message: String,
+    pub emotes: HashMap<String, String>,
+}
+
 pub async fn fetch_wed_response(
     channel: String,
     message: String,
+    emotes: HashMap<String, String>,
 ) -> Result<WEDResponse, Box<dyn std::error::Error>> {
-    let mut req_body = std::collections::HashMap::new();
-    req_body.insert("channel", channel);
-    req_body.insert("message", message);
+    let req_body = ReqBody {
+        channel: channel,
+        message: message,
+        emotes: emotes,
+    };
 
     let client = reqwest::Client::new();
     let wed_base_url = env::var("WED_URL").expect("WED URL must be set");
@@ -23,6 +33,7 @@ pub async fn fetch_wed_response(
         .json(&req_body)
         .send()
         .await?;
+
     let resp_body = resp.text().await?;
     let response = serde_json::from_str::<WEDResponse>(&resp_body[..])?;
     Ok(response)

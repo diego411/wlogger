@@ -61,9 +61,16 @@ impl TwitchClient {
                             }
                         }
 
+                        let mut emotes = std::collections::HashMap::new();
+
+                        for emote in msg.emotes {
+                            emotes.insert(emote.code, emote.id);
+                        }
+
                         let wed_response = WEDController::fetch_wed_response(
                             msg.channel_login.clone(),
                             msg.message_text.clone(),
+                            emotes,
                         )
                         .await;
 
@@ -76,6 +83,7 @@ impl TwitchClient {
                         };
 
                         if wed_response.is_weeb {
+                            //TODO this should be cached
                             if !database::is_channel_actively_logged(
                                 msg.channel_login.clone(),
                                 &pool.get().unwrap(),
