@@ -7,6 +7,8 @@ use diesel::PgConnection;
 use std::env;
 use std::ops::Deref;
 
+use rand::Rng;
+
 use r2d2;
 use r2d2_diesel::ConnectionManager;
 use rocket::http::Status;
@@ -120,6 +122,51 @@ pub fn messages_in_channel(channel_name: String, conn: &PgConnection) -> Vec<Mes
             "Error loading messages for channel: {}",
             &channel_name
         ))
+}
+
+pub fn random_message(conn: &PgConnection) -> Option<Message> {
+    let count = all_messages
+        .count()
+        .get_result(conn)
+        .expect("Error counting messages");
+    let rand = rand::thread_rng().gen_range(0..count);
+    print!("{}", rand);
+    match all_messages
+        .order(messages::id.desc())
+        .offset(rand)
+        .load::<Message>(conn)
+        .expect("Error loading messages from database")
+        .first()
+    {
+        Some(message) => Some(message.to_owned()),
+        None => None,
+    }
+}
+
+pub fn random_message_for_channel(channel_name: String, conn: &PgConnection) -> Option<Message> {
+    let count = all_messages
+        .order_by(messages::id)
+        .filter(lower(messages::channel).eq(&channel_name.to_lowercase()))
+        .count()
+        .group_by(messages::id)
+        .get_result(conn)
+        .expect(&format!(
+            "Error counting messages for channel: {}",
+            &channel_name
+        ));
+    let rand = rand::thread_rng().gen_range(0..count);
+    print!("{}", rand);
+    match all_messages
+        .order(messages::id.desc())
+        .filter(lower(messages::channel).eq(&channel_name.to_lowercase()))
+        .offset(rand)
+        .load::<Message>(conn)
+        .expect("Error loading messages from database")
+        .first()
+    {
+        Some(message) => Some(message.to_owned()),
+        None => None,
+    }
 }
 
 pub fn every_channel(conn: &PgConnection) -> Vec<Channel> {

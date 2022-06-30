@@ -21,3 +21,17 @@ pub fn new_message(conn: db_conn, new_message: Json<NewMessage>) -> Json<Value> 
         "result": database::every_message(&conn).first(),
     }))
 }
+
+#[get("/messages/random?<channel>", format = "application/json")]
+pub fn random_message(conn: db_conn, channel: Option<String>) -> Json<Value> {
+    match channel {
+        Some(channel) => Json(json!({
+            "status": 200,
+            "result": database::random_message_for_channel(channel, &conn).unwrap()
+        })),
+        None => Json(json!({
+            "status": 200,
+            "result": database::random_message(&conn).unwrap()
+        })),
+    }
+}

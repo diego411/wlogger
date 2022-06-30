@@ -48,7 +48,8 @@ fn rocket(twitch_client: Arc<TwitchClient>) -> rocket::Rocket {
             user_index,
             user,
             patch_user,
-            new_user
+            new_user,
+            random_message
         ],
     )
 }
